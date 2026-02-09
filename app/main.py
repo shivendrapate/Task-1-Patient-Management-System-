@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from app.db.deps import get_db
 from app.db.session import engine
  
  
@@ -16,4 +18,8 @@ def db_test():
         return {"database":"connected"}
     except Exception as e:
         return {"Database ":"error", "detail":str(e)}
+    
+@app.get("/db-session-test")
+def db_session_test(db: Session = Depends(get_db)):
+    return {"message": "DB session injected successfully"}
     
