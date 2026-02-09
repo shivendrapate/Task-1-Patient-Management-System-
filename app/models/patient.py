@@ -1,5 +1,5 @@
 from sqlalchemy import Integer, String, Boolean, Float, ForeignKey, Column
-from sqlalchemy.sql import func, relationship
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Patient(Base):
