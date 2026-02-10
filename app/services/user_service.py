@@ -3,6 +3,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
+from app.schemas.user import UserUpdate
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
@@ -28,3 +29,43 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     
     return user
 
+
+def get_user_by_id(db: Session , user_id: int)-> User:
+    user = db.query(User).filter(user_id == User.id).first()
+    
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This user does not exist!")
+    
+    return user
+    
+def list_users(db: Session):
+    return db.query(User).all()
+
+
+def update_user(
+    db: Session,
+    user_id: int,
+    user_data: UserUpdate
+) -> User:
+    user = get_user_by_id(db, user_id)
+
+    if user_data.username is not None:
+        user.username = user_data.username
+
+    if user_data.is_active is not None:
+        user.is_active = user_data.is_active
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+def delete_user(db: Session , user_id : int):
+    user = get_user_by_id(db,user_id)
+    
+    db.delete(user)
+    db.commit()
+    
+    return {"Message":"User deleted Successfully!"}
+    
+    
