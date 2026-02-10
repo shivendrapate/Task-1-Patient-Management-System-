@@ -7,7 +7,7 @@ from app.services.user_service import get_user_by_id
 from app.services.user_service import list_users
 from app.services.user_service import update_user
 from app.services.user_service import delete_user
-
+from app.services.user_service import patch_user
 
 from typing import List
 
@@ -40,4 +40,12 @@ def delete_user_api(
     db: Session = Depends(get_db)
 ):
     return delete_user(db, user_id)
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def patch_user_api(
+    user_id: int,
+    user_data: UserUpdate,
+    db: Session = Depends(get_db)
+):
+    return patch_user(db, user_id, user_data)
 

@@ -68,4 +68,24 @@ def delete_user(db: Session , user_id : int):
     
     return {"Message":"User deleted Successfully!"}
     
+
+def patch_user(
+    db: Session,
+    user_id: int,
+    user_data: UserUpdate
+) -> User:
+    user = get_user_by_id(db, user_id)
+
+    update_data = user_data.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+    
+    
     
