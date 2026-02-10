@@ -1,11 +1,26 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "postgresql://patient_user:1111@localhost:5432/patient_db"
+# Load .env file
+load_dotenv()
 
+DB_DRIVER = os.getenv("DB_DRIVER")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
 
-engine = create_engine(DATABASE_URL,echo = True)
+DATABASE_URL = (
+    f"{DB_DRIVER}://{DB_USER}:{DB_PASSWORD}" f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
+engine = create_engine(
+    DATABASE_URL,
+    echo=True
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
