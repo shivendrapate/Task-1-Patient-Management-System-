@@ -1,13 +1,18 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from enum import Enum
 
+class UserRole(str, Enum):
+    patient = "patient"
+    doctor = "doctor"
+    admin = "admin"
+    super_admin = "super_admin"
 
 # Base Schema
 class UserBase(BaseModel):
     username: str
     email: EmailStr
-    role: str
-
+    role: UserRole
 
 class UserCreate(UserBase):
     password: str
@@ -23,6 +28,6 @@ class UserResponse(UserBase):
     updated_at : datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 

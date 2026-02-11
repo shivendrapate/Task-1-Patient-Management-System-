@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException   
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -8,7 +8,9 @@ from app.services.user_service import list_users
 from app.services.user_service import update_user
 from app.services.user_service import delete_user
 from app.services.user_service import patch_user
-
+from app.services.user_service import patch_user
+from app.core.dependencies import get_current_user
+from app.core.dependencies import require_role
 from typing import List
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -20,12 +22,24 @@ def create_user_api(user_data: UserCreate ,db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id:int ,db: Session = Depends(get_db)):
-    
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    if current_user.id != user_id and current_user.role not in ["admin", "super_admin"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed"
+        )
+
     return get_user_by_id(db, user_id)
 
+
 @router.get("/", response_model=List[UserResponse])
-def list_all_users(db: Session = Depends(get_db)):
+def list_all_users(db: Session = Depends(get_db), 
+                   current_user =   Depends(require_role(["admin","super_admin"]))
+                   ):
     return list_users(db)
 
 
@@ -37,7 +51,8 @@ def update_user_api(user_id: int, user_data: UserUpdate, db: Session = Depends(g
 @router.delete("/{user_id}")
 def delete_user_api(
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role(['admin','super_admin']))
 ):
     return delete_user(db, user_id)
 

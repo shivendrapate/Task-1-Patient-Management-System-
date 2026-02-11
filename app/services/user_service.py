@@ -106,9 +106,8 @@ def login_user(db: Session , username: str, password: str):
     
     token = create_access_token({"sub": str(user.id), "role": user.role})
     
-    return {"Access Token": token, "token_type": "Bearer"}
+    return {"access_token": token, "token_type": "bearer"}
 
 
-    
-    
-    
+
+
