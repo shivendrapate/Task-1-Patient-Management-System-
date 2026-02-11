@@ -4,6 +4,9 @@ from app.schemas.user import UserCreate
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from app.schemas.user import UserUpdate
+from app.core.security import create_access_token
+
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
@@ -85,6 +88,26 @@ def patch_user(
     db.refresh(user)
 
     return user
+
+def authenticate_user(db: Session, username: str, password: str):
+    user = db.query(User).filter(User.username == username).first()
+    
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not registered")
+    
+    if pwd_context.verify(password, user.password_hashed) is False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Enter Correct password")
+
+    return user
+
+
+def login_user(db: Session , username: str, password: str):
+    user  = authenticate_user(db, username, password)
+    
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    
+    return {"Access Token": token, "token_type": "Bearer"}
+
 
     
     

@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.db.session import engine
 from app.api.v1.users import router as user_router
- 
+from app.api.v1.auth import router as auth_router
+
  
 app = FastAPI(title = "Patient Management System")
 
+app.include_router(auth_router)
 app.include_router(user_router)
 
 @app.get("/")
