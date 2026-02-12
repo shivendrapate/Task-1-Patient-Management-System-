@@ -19,5 +19,6 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+    delete_at = Column(DateTime(timezone=True),nullable=True )
     
     

@@ -12,9 +12,7 @@ oauth_2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
 
 
 # This fuction by extracts user id by accepting token
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth_2_scheme)):
-    print(token)
-    
+def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth_2_scheme)):    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")

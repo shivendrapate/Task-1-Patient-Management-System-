@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from app.schemas.user import UserUpdate
 from app.core.security import create_access_token
-
+from datetime import datetime
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
@@ -41,8 +41,24 @@ def get_user_by_id(db: Session , user_id: int)-> User:
     
     return user
     
-def list_users(db: Session):
-    return db.query(User).all()
+def list_users(
+    db: Session,
+    limit: int = 10,
+    offset: int = 0,
+    is_active: bool | None = None,
+    role: str | None = None
+):
+    query = db.query(User).filter(User.delete_at.is_(None))
+    
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+    
+    if role is not None:
+        query = query.filter(User.role  == role)
+    
+    return query.offset(offset).limit(limit).all()
+    
+    
 
 
 def update_user(
@@ -108,6 +124,26 @@ def login_user(db: Session , username: str, password: str):
     
     return {"access_token": token, "token_type": "bearer"}
 
+def soft_delete_user(db: Session, user_id: int):
+    user = get_user_by_id(db,user_id)
+    
+    user.delete_at = datetime.utcnow()
+    db.commit()
+    
+    return {"Message":"User deleted Successfully!"}
 
 
-
+def restore_user(db:Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not exist!")
+    
+    if user.delete_at is None:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail = "User not deleted!")
+    
+    user.delete_at = None
+    db.commit()
+    db.refresh(user)
+    
+    return {"Message":"User Restored"}
