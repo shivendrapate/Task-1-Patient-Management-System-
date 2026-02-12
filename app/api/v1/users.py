@@ -87,3 +87,4 @@ def restore_user_api(
   current_user = Depends(require_role(["admin","super_admin"]))  
 ):
     return restore_user(db, user_id)
+
