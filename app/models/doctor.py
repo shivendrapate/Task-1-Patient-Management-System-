@@ -10,4 +10,9 @@ class Doctor(Base):
 
     specialization = Column(String(100), nullable=False)
 
+    patients = relationship(
+    "DoctorPatient",
+    back_populates="doctor",
+    cascade="all, delete-orphan"
+    )
     user = relationship("User", backref="doctor")

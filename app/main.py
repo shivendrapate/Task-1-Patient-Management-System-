@@ -9,7 +9,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
- 
+from app.api.v1.doctor_patient import router as dp_router
+
 import time
 import logging
 
@@ -33,9 +34,6 @@ async def log_requests(request: Request, call_next):
     )
 
     return response
-
-
-
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -91,6 +89,8 @@ async def log_requests(request: Request, call_next):
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(dp_router)
+
 
 @app.get("/")
 def health_check():

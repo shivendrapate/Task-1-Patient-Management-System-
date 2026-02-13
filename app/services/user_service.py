@@ -6,6 +6,9 @@ from passlib.context import CryptContext
 from app.schemas.user import UserUpdate
 from app.core.security import create_access_token
 from datetime import datetime
+from app.models.doctor import Doctor
+from app.models.patient import Patient
+
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
@@ -30,6 +33,22 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     db.commit()
     db.refresh(user)
     
+    if user.role == "doctor":
+        doctor_profile = Doctor(
+            user_id=user.id,
+            specialization="General"  # default value
+        )
+        db.add(doctor_profile)
+
+    elif user.role == "patient":
+        patient_profile = Patient(
+            user_id=user.id,
+            disease="Not specified"
+        )
+        db.add(patient_profile)
+
+    db.commit()
+
     return user
 
 
@@ -147,3 +166,4 @@ def restore_user(db:Session, user_id: int):
     db.refresh(user)
     
     return {"Message":"User Restored"}
+
