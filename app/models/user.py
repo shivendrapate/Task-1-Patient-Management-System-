@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime 
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class User(Base):
@@ -21,4 +22,5 @@ class User(Base):
     )
     delete_at = Column(DateTime(timezone=True),nullable=True )
     
-    
+    doctor_profile = relationship("Doctor", back_populates="user", uselist=False)
+    patient_profile = relationship("Patient", back_populates="user", uselist=False)

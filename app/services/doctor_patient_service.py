@@ -30,3 +30,17 @@ def assign_patient_to_doctor(db: Session, doctor_id: int, patient_id: int):
     db.refresh(relation)
 
     return {"message": "Patient assigned to doctor"}
+
+def get_doctor_patients(db: Session, doctor_id: int):
+    relations = db.query(DoctorPatient).filter(
+        DoctorPatient.doctor_id == doctor_id
+    ).all()
+
+    return [relation.patient for relation in relations]
+
+def get_patient_doctors(db: Session, patient_id: int):
+    relations = db.query(DoctorPatient).filter(
+        DoctorPatient.patient_id == patient_id
+    ).all()
+
+    return [relation.doctor for relation in relations]
