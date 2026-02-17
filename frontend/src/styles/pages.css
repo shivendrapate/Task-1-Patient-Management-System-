@@ -1,0 +1,16 @@
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .panel,
+  .page-grid {
+    padding: var(--space-3);
+  }
+
+  .definition-grid {
+    grid-template-columns: 1fr;
+  }
+}

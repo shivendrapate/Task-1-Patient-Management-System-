@@ -1,0 +1,251 @@
+.panel,
+.page-grid {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.page-grid {
+  animation-delay: 0.04s;
+}
+
+.eyebrow {
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+}
+
+.muted-text {
+  color: var(--color-muted);
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-grid label,
+.inline-form label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.inline-form {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  align-items: end;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  padding: 0.56rem 0.68rem;
+  background: #fff;
+  color: var(--color-text);
+}
+
+input:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(10, 139, 122, 0.34);
+  outline-offset: 2px;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.58rem 0.9rem;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+
+.btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+}
+
+.btn-warn {
+  background: var(--color-warn);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.api-feedback-stack {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.status {
+  border-radius: var(--radius-sm);
+  padding: 0.58rem 0.75rem;
+  border: 1px solid;
+}
+
+.status-loading {
+  background: rgba(31, 119, 170, 0.1);
+  border-color: rgba(31, 119, 170, 0.35);
+  color: #125178;
+}
+
+.status-error {
+  background: rgba(179, 63, 54, 0.12);
+  border-color: rgba(179, 63, 54, 0.35);
+  color: #6f1f1a;
+}
+
+.status-success {
+  background: rgba(26, 143, 97, 0.12);
+  border-color: rgba(26, 143, 97, 0.35);
+  color: #12593c;
+}
+
+.result-card {
+  display: grid;
+  gap: 0.35rem;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem;
+}
+
+.inline-link {
+  font-weight: 700;
+}
+
+.status-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  padding: var(--space-3);
+  display: grid;
+  gap: 0.5rem;
+}
+
+.status-card-state {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.status-card-healthy .status-card-state {
+  color: var(--color-success);
+}
+
+.status-card-error .status-card-state {
+  color: var(--color-danger);
+}
+
+.status-card-loading .status-card-state {
+  color: var(--color-secondary);
+}
+
+.status-card-idle .status-card-state {
+  color: var(--color-muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.data-table caption {
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 0.7rem;
+  border-top: 1px solid #e4efed;
+  vertical-align: top;
+}
+
+.data-table th {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  color: #23535f;
+}
+
+.table-empty {
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.definition-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.5rem 0.7rem;
+}
+
+.definition-grid dt {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.definition-grid dd {
+  margin: 0;
+}
