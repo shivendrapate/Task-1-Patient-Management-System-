@@ -20,13 +20,15 @@ describe("app smoke flows", () => {
   test("logs in and stores token", async () => {
     renderAt("/login");
 
+    fireEvent.click(screen.getByRole("button", { name: /login as admin/i }));
+
     fireEvent.change(screen.getByLabelText(/username/i), {
       target: { value: "alice" },
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "secret" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^login$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /dashboard/i })).toBeInTheDocument();
@@ -46,7 +48,8 @@ describe("app smoke flows", () => {
     });
   });
 
-  test("creates a user from public create form", async () => {
+  test("creates a user from admin-protected create form", async () => {
+    localStorage.setItem(TOKEN_KEY, validToken);
     renderAt("/users/create");
 
     fireEvent.change(screen.getByLabelText(/username/i), {

@@ -23,9 +23,11 @@ export function NavShell() {
         <NavLink to="/dashboard" className={navClassName}>
           Dashboard
         </NavLink>
-        <NavLink to="/users/create" className={navClassName}>
-          Create User
-        </NavLink>
+        {isAdmin ? (
+          <NavLink to="/users/create" className={navClassName}>
+            Create User
+          </NavLink>
+        ) : null}
         {role === "admin" || role === "super_admin" ? (
           <>
             <NavLink to="/users" className={navClassName}>
@@ -44,7 +46,7 @@ export function NavShell() {
         ) : null}
         {userId ? (
           <NavLink to={`/users/${userId}`} className={navClassName}>
-            My User Detail
+            My Details
           </NavLink>
         ) : null}
         {!isAdmin && isDoctor ? (

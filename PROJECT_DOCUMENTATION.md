@@ -15,6 +15,7 @@ Build a secure, role-aware, full-stack system that supports:
 - User management
 - Doctor-patient assignment
 - JWT-based authentication
+- JWT access and refresh token workflow
 - Role-based and relationship-based authorization
 - Soft delete and restore workflows
 - End-to-end frontend integration for API operations
@@ -22,8 +23,11 @@ Build a secure, role-aware, full-stack system that supports:
 ### 1.4 Key Features
 
 - JWT login (`POST /auth/login`)
+- Refresh token rotation (`POST /auth/refresh`)
 - Role-based access control (`admin`, `super_admin`, `doctor`, `patient`)
 - Relationship-based access checks for assignment lookups
+- Admin-only user creation endpoint access
+- Super admin delete protection (hard/soft delete blocked)
 - User CRUD with `PUT`, `PATCH`, pagination/filtering
 - Hard delete, soft delete (`delete_at`), restore
 - Many-to-many doctor-patient association
@@ -47,7 +51,6 @@ In scope:
 
 Out of scope:
 
-- Refresh token lifecycle (not implemented yet)
 - Medical record files/imaging workflows
 - Notification delivery (SMS/email/push)
 
@@ -92,12 +95,16 @@ sequenceDiagram
     C->>API: POST /auth/login (username, password)
     API->>DB: Query user by username
     API->>API: Verify bcrypt hash
-    API->>API: Create JWT (sub, role, exp)
-    API-->>C: access_token + token_type
-    C->>C: Store token (localStorage)
+    API->>API: Create access token (type=access)
+    API->>API: Create refresh token (type=refresh)
+    API-->>C: access_token + refresh_token + token_type
+    C->>C: Store tokens (localStorage)
     C->>API: Authenticated request with Bearer token
     API->>API: Decode token in dependency
     API-->>C: Authorized response or 401/403
+    C->>API: POST /auth/refresh (on access expiry)
+    API->>API: Validate refresh token and rotate tokens
+    API-->>C: new access_token + refresh_token
 ```
 
 ### 2.5 Role-Based Access Design
@@ -298,19 +305,23 @@ app/
 ### 4.3 Authentication
 
 - Passwords are hashed with bcrypt via Passlib
-- Login endpoint validates credentials and returns JWT access token
+- Login endpoint validates credentials and returns both access and refresh tokens
 - JWT payload includes:
   - `sub` (user ID)
   - `role`
   - `exp` (expiration)
+- JWT token type includes:
+  - `type=access`
+  - `type=refresh`
 - Token expiration controlled by `ACCESS_TOKEN_EXPIRE_MINUTES`
+- Refresh token expiration controlled by `REFRESH_TOKEN_EXPIRE_DAYS`
 - Token validation is implemented in dependency (`get_current_user`)
 
 Access vs refresh concept:
 
-- Current implementation: access token only
-- Refresh token support: not implemented yet
-- Recommended next step: introduce refresh token rotation and revocation list
+- Access token: used in `Authorization: Bearer` for protected routes
+- Refresh token: used at `POST /auth/refresh` to renew session
+- Current implementation rotates refresh token on refresh
 
 ### 4.4 Authorization
 
@@ -322,7 +333,7 @@ Access vs refresh concept:
 
 User operations:
 
-- Create: `POST /users/`
+- Create: `POST /users/` (`admin`/`super_admin` only)
 - Get by ID: `GET /users/{user_id}` with self/admin restriction
 - List: `GET /users/` with pagination/filtering (`limit`, `offset`, `is_active`, `role`)
 - Full update: `PUT /users/{user_id}`
@@ -330,6 +341,7 @@ User operations:
 - Hard delete: `DELETE /users/{user_id}`
 - Soft delete: `DELETE /users/{user_id}/soft_delete_user`
 - Restore: `POST /users/{user_id}/restore`
+- Super admin users cannot be hard-deleted or soft-deleted
 
 ### 4.6 Logging and Error Handling
 
@@ -385,17 +397,18 @@ frontend/src/
 
 ### 5.3 Authentication Handling
 
-- Token stored in localStorage (`pms_access_token`)
+- Tokens stored in localStorage (`pms_access_token`, `pms_refresh_token`)
 - Axios request interceptor adds `Authorization: Bearer <token>`
-- Axios response interceptor clears token on `401`
+- Axios response interceptor attempts token refresh on `401`
+- If refresh fails, interceptor clears both tokens and logs out
 - Protected routes redirect unauthenticated users to `/login`
 - Token payload decoded client-side for role-aware navigation
 
 ### 5.4 Pages Overview
 
-- `LoginPage`: authenticate user
+- `LoginPage`: authenticate user with role-select modes (doctor, patient, admin; admin mode includes super_admin)
 - `DashboardPage`: health status and quick links
-- `UserCreatePage`: create account (public bootstrap flow)
+- `UserCreatePage`: create account (`admin`/`super_admin` access)
 - `UserListPage`: pagination and filters
 - `UserDetailPage`: user detail view
 - `UserUpdatePage`: PUT update
@@ -404,7 +417,8 @@ frontend/src/
 - `AssignPatientPage`: create doctor-patient assignment
 - `DoctorPatientsPage`: query patients by doctor
 - `PatientDoctorsPage`: query doctors by patient
-- Profile concept: represented by `/users/:id` ("My User Detail")
+- Profile concept: represented by `/users/:id` ("My Details")
+- For doctor/patient roles, profile view shows `doctor_id` / `patient_id` from profile tables
 
 ### 5.5 API Integration Strategy
 
@@ -423,15 +437,17 @@ frontend/src/
 
 1. User submits username/password on frontend login page.
 2. Frontend calls `POST /auth/login` (form-encoded).
-3. Backend validates credentials and returns access token.
-4. Frontend stores token and routes user to dashboard.
+3. Backend validates credentials and returns access + refresh tokens.
+4. Frontend stores tokens and routes user to dashboard.
 
 ### 6.2 Token Exchange Flow
 
-1. Frontend reads token from localStorage.
+1. Frontend reads access token from localStorage.
 2. Axios interceptor appends Bearer token.
 3. Backend decodes token in dependency and loads user.
-4. Request proceeds if valid; otherwise 401/403 returned.
+4. On access-token expiry (`401`), frontend calls `POST /auth/refresh`.
+5. Backend validates refresh token and issues new token pair.
+6. Frontend retries the original request with new access token.
 
 ### 6.3 Role-Based UI Rendering
 
@@ -472,8 +488,7 @@ frontend/src/
 
 Security improvements recommended:
 
-- Refresh tokens + rotation
-- Token revocation / blacklist
+- Refresh token revocation / blacklist strategy
 - Rate limiting on login endpoint
 - More granular audit logging
 - CORS hardening for production origin list
@@ -504,7 +519,7 @@ Security improvements recommended:
 Backend:
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_DRIVER`
-- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`
 
 Frontend:
 
@@ -538,7 +553,7 @@ Frontend:
 
 | Endpoint | super_admin | admin | doctor | patient |
 |---|---|---|---|---|
-| `POST /users/` | Allow | Allow | Allow | Allow |
+| `POST /users/` | Allow | Allow | Deny | Deny |
 | `GET /users/` | Allow | Allow | Deny | Deny |
 | `GET /users/{id}` (self) | Allow | Allow | Allow | Allow |
 | `GET /users/{id}` (other) | Allow | Allow | Deny | Deny |
@@ -546,6 +561,10 @@ Frontend:
 | `POST /assignments/` | Allow | Allow | Deny | Deny |
 | `GET /assignments/doctor/{id}/patients` | Allow | Allow | Own only | Deny |
 | `GET /assignments/patient/{id}/doctors` | Allow | Allow | Deny | Own only |
+
+Special rule:
+
+- Deletion (hard/soft) is blocked if target user's role is `super_admin`.
 
 ### 9.4 Error Case Testing
 
@@ -571,7 +590,7 @@ Current frontend includes smoke tests for:
 
 ## 10. Future Improvements
 
-- Refresh token implementation
+- Refresh token revocation store and logout-all-sessions support
 - Detailed audit logs per mutation
 - File upload support (reports/documents)
 - Expanded medical record domain model
@@ -611,6 +630,7 @@ DB_DRIVER=postgresql
 SECRET_KEY=<your-secret>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
 ### Step 4: Run migrations
@@ -646,8 +666,8 @@ npm run dev
 
 ### Step 8: Validate full flow
 
-1. Create user from frontend `/users/create`.
-2. Login from `/login`.
+1. Login from `/login` with admin/super_admin account.
+2. Create users from frontend `/users/create`.
 3. Access dashboard and user pages.
 4. As admin/super_admin, test assignments and delete/restore.
 5. Verify role-limited access with doctor/patient accounts.
@@ -664,7 +684,8 @@ npm run dev
 | GET | `/db-test` | No | Public (diagnostic) |
 | GET | `/db-session-test` | No | Public (diagnostic) |
 | POST | `/auth/login` | No | Public |
-| POST | `/users/` | No | Public |
+| POST | `/auth/refresh` | No | Public (requires refresh token payload) |
+| POST | `/users/` | Yes | `admin`, `super_admin` |
 | GET | `/users/` | Yes | `admin`, `super_admin` |
 | GET | `/users/{user_id}` | Yes | self OR `admin` OR `super_admin` |
 | PUT | `/users/{user_id}` | No (current code) | Public (current code) |
@@ -690,6 +711,26 @@ username=alice&password=secret
 ```json
 {
   "access_token": "<jwt-token>",
+  "refresh_token": "<jwt-refresh-token>",
+  "token_type": "bearer"
+}
+```
+
+#### Refresh Access Token
+
+```http
+POST /auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "<jwt-refresh-token>"
+}
+```
+
+```json
+{
+  "access_token": "<new-jwt-token>",
+  "refresh_token": "<new-jwt-refresh-token>",
   "token_type": "bearer"
 }
 ```
@@ -699,6 +740,7 @@ username=alice&password=secret
 ```http
 POST /users/
 Content-Type: application/json
+Authorization: Bearer <jwt-token>
 
 {
   "username": "john",
@@ -711,6 +753,8 @@ Content-Type: application/json
 ```json
 {
   "id": 12,
+  "doctor_id": null,
+  "patient_id": 5,
   "username": "john",
   "email": "john@example.com",
   "role": "patient",

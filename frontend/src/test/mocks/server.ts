@@ -5,9 +5,13 @@ const api = "/api";
 
 const validToken =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjo0MTAyNDQ0ODAwfQ.signature";
+const validRefreshToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjo0NDE2MTQwODAwfQ.signature";
 
 const user = {
   id: 1,
+  doctor_id: null,
+  patient_id: null,
   username: "alice",
   email: "alice@example.com",
   role: "admin",
@@ -20,7 +24,19 @@ export const handlers = [
   http.get(`${api}/`, () => HttpResponse.json({ "Status:": "Healthy" })),
 
   http.post(`${api}/auth/login`, async () => {
-    return HttpResponse.json({ access_token: validToken, token_type: "bearer" });
+    return HttpResponse.json({
+      access_token: validToken,
+      refresh_token: validRefreshToken,
+      token_type: "bearer",
+    });
+  }),
+
+  http.post(`${api}/auth/refresh`, async () => {
+    return HttpResponse.json({
+      access_token: validToken,
+      refresh_token: validRefreshToken,
+      token_type: "bearer",
+    });
   }),
 
   http.post(`${api}/users/`, async () => HttpResponse.json(user)),
@@ -85,4 +101,4 @@ export const handlers = [
 ];
 
 export const server = setupServer(...handlers);
-export { api, validToken };
+export { api, validToken, validRefreshToken };

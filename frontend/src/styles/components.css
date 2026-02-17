@@ -30,6 +30,33 @@
   gap: var(--space-2);
 }
 
+.role-mode-grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.role-mode-btn {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.role-mode-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.role-mode-btn-active {
+  border-color: var(--color-primary);
+  background: rgba(10, 139, 122, 0.1);
+  color: var(--color-primary-strong);
+}
+
 .form-grid label,
 .inline-form label {
   display: grid;

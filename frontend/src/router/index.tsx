@@ -43,10 +43,6 @@ export function createAppRouter() {
           path: "/login",
           element: <LoginPage />,
         },
-        {
-          path: "/users/create",
-          element: <UserCreatePage />,
-        },
       ],
     },
     {
@@ -58,6 +54,10 @@ export function createAppRouter() {
             {
               path: "/dashboard",
               element: <DashboardPage />,
+            },
+            {
+              path: "/users/create",
+              element: <UserCreatePage />,
             },
             {
               path: "/users",

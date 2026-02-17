@@ -18,7 +18,11 @@ from typing import List
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=UserResponse)
-def create_user_api(user_data: UserCreate ,db: Session = Depends(get_db)):
+def create_user_api(
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+    _current_user = Depends(require_role(["admin", "super_admin"]))
+):
     
     return create_user(db, user_data)   
 
@@ -87,4 +91,3 @@ def restore_user_api(
   current_user = Depends(require_role(["admin","super_admin"]))  
 ):
     return restore_user(db, user_id)
-

@@ -4,10 +4,14 @@ React + TypeScript + Vite frontend for the FastAPI backend in this repository.
 
 ## Features
 
-- JWT login (`/auth/login`) with localStorage session and route guards
+- JWT login (`/auth/login`) with refresh-token rotation (`/auth/refresh`)
+- Access and refresh tokens stored in localStorage (`pms_access_token`, `pms_refresh_token`)
 - Role-aware navigation for admin, doctor, patient
+- Role-based login options: doctor, patient, admin (admin includes super_admin)
+- `My Details` view shows role-specific `doctor_id` or `patient_id`
 - Explicit UI actions for every non-DB endpoint:
   - `POST /auth/login`
+  - `POST /auth/refresh` (called automatically by interceptor)
   - `POST /users/`
   - `GET /users/{user_id}`
   - `GET /users/`
@@ -47,6 +51,8 @@ npm run dev
 ```
 
 Frontend runs on Vite default port and calls backend through proxy (`/api` -> `http://127.0.0.1:8000`).
+
+`/users/create` is protected and intended for `admin`/`super_admin` users.
 
 ## Build and test
 

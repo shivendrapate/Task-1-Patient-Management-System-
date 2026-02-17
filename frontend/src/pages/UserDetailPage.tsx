@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiFeedback } from "../components/ApiFeedback";
+import { useAuth } from "../hooks/useAuth";
 import { userService } from "../services/userService";
 import type { ApiError, UserResponse } from "../types/api";
 
 export function UserDetailPage() {
   const params = useParams();
   const userId = useMemo(() => Number(params.id), [params.id]);
+  const { userId: currentUserId } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +39,13 @@ export function UserDetailPage() {
     void fetchUser();
   }, [fetchUser]);
 
+  const showMyDetails = user ? user.id === currentUserId : userId === currentUserId;
+
   return (
     <section className="panel page-enter">
       <header>
         <p className="eyebrow">Users API</p>
-        <h2>User detail</h2>
+        <h2>{showMyDetails ? "My Details" : "User Details"}</h2>
       </header>
 
       <p className="muted-text">Endpoint: GET /users/{"{user_id}"}</p>
@@ -50,6 +54,18 @@ export function UserDetailPage() {
           <dl className="definition-grid">
             <dt>ID</dt>
             <dd>{user.id}</dd>
+            {user.role === "doctor" ? (
+              <>
+                <dt>Doctor ID</dt>
+                <dd>{user.doctor_id ?? "Not available"}</dd>
+              </>
+            ) : null}
+            {user.role === "patient" ? (
+              <>
+                <dt>Patient ID</dt>
+                <dd>{user.patient_id ?? "Not available"}</dd>
+              </>
+            ) : null}
             <dt>Username</dt>
             <dd>{user.username}</dd>
             <dt>Email</dt>

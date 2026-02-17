@@ -5,13 +5,24 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from app.schemas.user import UserUpdate
 from app.core.security import create_access_token
+from app.core.security import create_refresh_token
+from app.core.security import SECRET_KEY, ALGORITHM
 from datetime import datetime
 from app.models.doctor import Doctor
 from app.models.patient import Patient
+from jose import jwt, JWTError
 
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
+
+
+def ensure_user_is_not_super_admin(user: User) -> None:
+    if user.role == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin user cannot be deleted."
+        )
 
 def hash_password(password:str ) -> str:
     return pwd_context.hash(password)
@@ -48,6 +59,7 @@ def create_user(db: Session, user_data: UserCreate) -> User:
         db.add(patient_profile)
 
     db.commit()
+    db.refresh(user)
 
     return user
 
@@ -100,6 +112,7 @@ def update_user(
 
 def delete_user(db: Session , user_id : int):
     user = get_user_by_id(db,user_id)
+    ensure_user_is_not_super_admin(user)
     
     db.delete(user)
     db.commit()
@@ -139,12 +152,61 @@ def authenticate_user(db: Session, username: str, password: str):
 def login_user(db: Session , username: str, password: str):
     user  = authenticate_user(db, username, password)
     
-    token = create_access_token({"sub": str(user.id), "role": user.role})
+    access_token = create_access_token({"sub": str(user.id), "role": user.role})
+    refresh_token = create_refresh_token({"sub": str(user.id), "role": user.role})
     
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
+
+
+def refresh_access_token(db: Session, refresh_token: str):
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    token_type = payload.get("type")
+    user_id = payload.get("sub")
+
+    if token_type != "refresh" or user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    user = db.query(User).filter(User.id == user_id_int).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    new_access_token = create_access_token({"sub": str(user.id), "role": user.role})
+    new_refresh_token = create_refresh_token({"sub": str(user.id), "role": user.role})
+
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
 
 def soft_delete_user(db: Session, user_id: int):
     user = get_user_by_id(db,user_id)
+    ensure_user_is_not_super_admin(user)
     
     user.delete_at = datetime.utcnow()
     db.commit()
@@ -166,4 +228,3 @@ def restore_user(db:Session, user_id: int):
     db.refresh(user)
     
     return {"Message":"User Restored"}
-

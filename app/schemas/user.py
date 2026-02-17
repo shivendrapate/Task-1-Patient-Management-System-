@@ -23,11 +23,12 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    doctor_id: int | None = None
+    patient_id: int | None = None
     is_active: bool
     created_at : datetime
     updated_at : datetime
     
     class Config:
         from_attributes = True
-
 

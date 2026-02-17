@@ -24,3 +24,11 @@ class User(Base):
     
     doctor_profile = relationship("Doctor", back_populates="user", uselist=False)
     patient_profile = relationship("Patient", back_populates="user", uselist=False)
+
+    @property
+    def doctor_id(self):
+        return self.doctor_profile.id if self.doctor_profile else None
+
+    @property
+    def patient_id(self):
+        return self.patient_profile.id if self.patient_profile else None

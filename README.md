@@ -6,7 +6,7 @@ A full-stack Patient Management System built to learn and demonstrate backend en
 
 - Backend: FastAPI + SQLAlchemy + PostgreSQL + Alembic + JWT
 - Frontend: React + Vite + TypeScript + Axios + React Router
-- Auth: JWT access token with role-based and relationship-based access control
+- Auth: JWT access + refresh tokens with role-based and relationship-based access control
 - Domain model: `users`, `doctors`, `patients`, `doctor_patient` association
 - Data lifecycle: hard delete + soft delete (`users.delete_at`) + restore
 
@@ -37,9 +37,12 @@ A full-stack Patient Management System built to learn and demonstrate backend en
 ## Key Features
 
 - User registration and login
+- Refresh-token based access-token renewal
 - JWT-protected APIs
 - Role-based authorization (`admin`, `super_admin`, `doctor`, `patient`)
 - Relationship-based authorization (doctor can access own patients, patient can access own doctors)
+- User creation restricted to `admin` and `super_admin`
+- `super_admin` users cannot be hard-deleted or soft-deleted
 - User list with pagination and filtering
 - Full/partial updates (`PUT` + `PATCH`)
 - User hard delete, soft delete, and restore
@@ -53,6 +56,7 @@ The frontend intentionally covers every non-DB diagnostic endpoint exposed by th
 Covered endpoints:
 
 - `POST /auth/login`
+- `POST /auth/refresh`
 - `POST /users/`
 - `GET /users/`
 - `GET /users/{user_id}`
@@ -100,6 +104,7 @@ DB_DRIVER=postgresql
 SECRET_KEY=<your-secret>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
 Run migrations:
@@ -139,6 +144,6 @@ npm run build
 ## Notes
 
 - Soft delete field is implemented as `delete_at` (not `deleted_at`) in the current codebase.
-- Current JWT implementation uses access tokens only; refresh-token flow is not yet implemented.
+- Frontend uses `My Details` to display role-specific profile IDs (`doctor_id` or `patient_id`) when available.
 
 For full architecture, API contract details, role matrix, sequence diagrams, and deployment/testing strategy, see `PROJECT_DOCUMENTATION.md` and `ARCHITECTURE.md`.

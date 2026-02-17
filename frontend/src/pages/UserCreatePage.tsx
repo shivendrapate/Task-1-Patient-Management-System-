@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { ApiFeedback } from "../components/ApiFeedback";
+import { useRoleGuard } from "../hooks/useRoleGuard";
 import { userService } from "../services/userService";
 import type { ApiError, UserResponse, UserRole } from "../types/api";
 
@@ -19,6 +20,7 @@ const createSchema = z.object({
 type UserCreateInput = z.infer<typeof createSchema>;
 
 export function UserCreatePage() {
+  const access = useRoleGuard(["admin", "super_admin"]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
@@ -52,6 +54,18 @@ export function UserCreatePage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!access.allowed) {
+    return (
+      <section className="panel page-enter">
+        <header>
+          <p className="eyebrow">Users API</p>
+          <h2>Create user</h2>
+        </header>
+        <ApiFeedback error={access.reason} />
+      </section>
+    );
   }
 
   return (

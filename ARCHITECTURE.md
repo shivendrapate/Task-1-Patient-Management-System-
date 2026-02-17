@@ -96,8 +96,12 @@ sequenceDiagram
     FE->>API: POST /auth/login
     API->>DB: fetch user by username
     API->>SEC: verify bcrypt hash
-    API->>SEC: sign JWT (sub, role, exp)
-    API-->>FE: access_token
+    API->>SEC: sign access token (type=access)
+    API->>SEC: sign refresh token (type=refresh)
+    API-->>FE: access_token + refresh_token
+    FE->>API: POST /auth/refresh (when access token expires)
+    API->>SEC: validate refresh token and rotate tokens
+    API-->>FE: new access_token + refresh_token
 ```
 
 ### 5.2 Authorization Control Planes
@@ -126,7 +130,7 @@ flowchart TD
 
 ### 6.1 Routing Design
 
-- Public routes: login, create user
+- Public routes: login
 - Protected route wrapper for authenticated areas
 - Role-aware navigation choices by decoded JWT payload
 
@@ -134,7 +138,8 @@ flowchart TD
 
 - Centralized Axios instance
 - Request interceptor injects token
-- Response interceptor clears token on 401
+- Response interceptor attempts `/auth/refresh` on 401 and retries once
+- If refresh fails, both tokens are cleared and user is logged out
 - Normalized error adapter for backend error formats
 
 ## 7. Critical Runtime Flows
@@ -191,15 +196,14 @@ flowchart LR
 
 ### 9.2 Current Tradeoffs
 
-- Access token only model is simple but lacks long-session refresh capability
 - Some user mutation endpoints do not currently enforce auth dependency
 - Middleware/exception handlers in `app/main.py` are duplicated and should be consolidated
 
 ## 10. Evolution Plan
 
-- Introduce refresh token subsystem
 - Harden authorization on all mutation routes
 - Add composite uniqueness on assignment relation
+- Add refresh token revocation/blacklist support
 - Add observability and structured logging pipeline
 - Introduce CI checks for migration consistency and security linting
 

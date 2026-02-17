@@ -20,4 +20,16 @@ export const authService = {
       throw normalizeApiError(error);
     }
   },
+
+  async refresh(refreshToken: string): Promise<LoginResponse> {
+    try {
+      const response = await http.post<LoginResponse>("/auth/refresh", {
+        refresh_token: refreshToken,
+      });
+
+      return response.data;
+    } catch (error) {
+      throw normalizeApiError(error);
+    }
+  },
 };

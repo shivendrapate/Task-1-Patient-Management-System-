@@ -14,6 +14,8 @@ export interface UserUpdate {
 
 export interface UserResponse {
   id: number;
+  doctor_id?: number | null;
+  patient_id?: number | null;
   username: string;
   email: string;
   role: UserRole;
@@ -29,6 +31,7 @@ export interface LoginFormValues {
 
 export interface LoginResponse {
   access_token: string;
+  refresh_token: string;
   token_type: "bearer" | string;
 }
 

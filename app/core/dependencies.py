@@ -16,8 +16,9 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth_2
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
+        token_type = payload.get("type", "access")
         
-        if user_id  is None:
+        if user_id  is None or token_type != "access":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
     except:
         

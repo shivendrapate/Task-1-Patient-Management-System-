@@ -10,9 +10,10 @@ import type { AuthTokenPayload, UserRole } from "../types/api";
 import {
   clearToken,
   decodeToken,
+  getRefreshToken,
   getToken,
   isTokenExpired,
-  setToken,
+  setTokens,
 } from "../lib/token";
 
 export interface AuthContextValue {
@@ -21,7 +22,7 @@ export interface AuthContextValue {
   role: UserRole | null;
   userId: number | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
@@ -40,26 +41,41 @@ function getValidatedTokenState(): {
   token: string | null;
   payload: AuthTokenPayload | null;
 } {
-  const stored = getToken();
+  const accessToken = getToken();
+  const refreshToken = getRefreshToken();
 
-  if (!stored) {
+  if (!accessToken) {
     return { token: null, payload: null };
   }
 
-  const payload = decodeToken(stored);
+  const payload = decodeToken(accessToken);
   if (!payload || isTokenExpired(payload)) {
-    clearToken();
-    return { token: null, payload: null };
+    if (!refreshToken) {
+      clearToken();
+      return { token: null, payload: null };
+    }
   }
 
-  return { token: stored, payload };
+  return { token: accessToken, payload };
+}
+
+function hasValidSession(token: string | null, payload: AuthTokenPayload | null): boolean {
+  if (!token || !payload) {
+    return false;
+  }
+
+  if (!isTokenExpired(payload)) {
+    return true;
+  }
+
+  return Boolean(getRefreshToken());
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(getValidatedTokenState);
 
-  const login = useCallback((token: string) => {
-    const payload = decodeToken(token);
+  const login = useCallback((accessToken: string, refreshToken: string) => {
+    const payload = decodeToken(accessToken);
 
     if (!payload || isTokenExpired(payload)) {
       clearToken();
@@ -67,8 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setToken(token);
-    setState({ token, payload });
+    setTokens(accessToken, refreshToken);
+    setState({ token: accessToken, payload });
   }, []);
 
   const logout = useCallback(() => {
@@ -88,32 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [logout]);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setState((current) => {
-        if (!current.payload) {
-          return current;
-        }
-
-        if (!isTokenExpired(current.payload)) {
-          return current;
-        }
-
-        clearToken();
-        return { token: null, payload: null };
-      });
-    }, 15000);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
   const value = useMemo<AuthContextValue>(
     () => ({
       token: state.token,
       payload: state.payload,
       role: state.payload?.role ?? null,
       userId: parseUserId(state.payload),
-      isAuthenticated: Boolean(state.token && state.payload),
+      isAuthenticated: hasValidSession(state.token, state.payload),
       login,
       logout,
     }),

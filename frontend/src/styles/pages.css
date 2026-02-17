@@ -10,6 +10,10 @@
     padding: var(--space-3);
   }
 
+  .role-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
   .definition-grid {
     grid-template-columns: 1fr;
   }
