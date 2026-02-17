@@ -18,5 +18,4 @@ class Patient(Base):
     back_populates="patient",
     cascade="all, delete-orphan"
     )
-    user = relationship("User", backref = "patient")
-
+    user = relationship("User", back_populates="patient_profile")

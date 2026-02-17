@@ -22,8 +22,20 @@ class User(Base):
     )
     delete_at = Column(DateTime(timezone=True),nullable=True )
     
-    doctor_profile = relationship("Doctor", back_populates="user", uselist=False)
-    patient_profile = relationship("Patient", back_populates="user", uselist=False)
+    doctor_profile = relationship(
+        "Doctor",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
+    patient_profile = relationship(
+        "Patient",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
 
     @property
     def doctor_id(self):
